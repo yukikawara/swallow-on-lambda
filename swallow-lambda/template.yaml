@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  python3.12
+
+  Sample SAM Template for swallow-lambda
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 900
+    MemorySize: 10240
+    EphemeralStorage:
+      Size: 5120
+
+Resources:
+  SwallowStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionSubstitutions:
+        EmbedFunctionArn: !GetAtt EmbedFunction.Arn
+        TokenizerEncoderFunctionArn: !GetAtt TokenizerEncoderFunction.Arn
+        TokenizerDecoderFunctionArn: !GetAtt TokenizerDecoderFunction.Arn
+        DecoderLayerFunctionArn: !GetAtt DecoderLayerFunction.Arn
+        LMHeadFunctionArn: !GetAtt LMHeadFunction.Arn
+        IsEndFunctionArn: !GetAtt LMHeadFunction.Arn
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref EmbedFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref TokenizerEncoderFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref TokenizerDecoderFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref DecoderLayerFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref LMHeadFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref IsEndFunction
+      DefinitionUri: statemachine/swallow.asl.json
+
+  EmbedFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Policies:
+        - S3ReadPolicy:
+            BucketName: kawara-swallow-lambda
+        - S3WritePolicy:
+            BucketName: kawara-swallow-lambda
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./embed_function
+      DockerTag: embed_function
+
+  TokenizerEncoderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./text_encode_function
+      DockerTag: text_encode_function
+
+  TokenizerDecoderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./text_decode_function
+      DockerTag: text_decode_function
+
+  DecoderLayerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Policies:
+        - S3ReadPolicy:
+            BucketName: kawara-swallow-lambda
+        - S3WritePolicy:
+            BucketName: kawara-swallow-lambda
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./decoder_function
+      DockerTag: decoder_function
+
+  LMHeadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Policies:
+        - S3ReadPolicy:
+            BucketName: kawara-swallow-lambda
+        - S3WritePolicy:
+            BucketName: kawara-swallow-lambda
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./lm_head_function
+      DockerTag: lm_head_function
+
+  IsEndFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Policies:
+        - S3ReadPolicy:
+            BucketName: kawara-swallow-lambda
+        - S3WritePolicy:
+            BucketName: kawara-swallow-lambda
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./is_end_function
+      DockerTag: is_end_function

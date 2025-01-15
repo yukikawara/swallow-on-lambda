@@ -1,0 +1,14 @@
+[project]
+name = "test-swallow"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3>=1.35.98",
+    "ipykernel>=6.29.5",
+    "ipython>=8.31.0",
+    "pillow>=11.1.0",
+    "torch>=2.5.1",
+    "transformers>=4.48.0",
+]
